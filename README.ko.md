@@ -170,14 +170,14 @@ const body = await res.text();              // res 를 내 스트림 파서에 �
 
 ```mermaid
 flowchart LR
-  A[내 웹 앱<br/>fetch] --> B[MAIN world 래퍼<br/>응답을 clone]
+  A[내 웹 앱<br/>fetch] --> B[MAIN world 래퍼<br/>본문을 관찰 스트림에 통과]
   B --> C[릴레이 콘텐츠 스크립트<br/>상한 있는 버퍼]
   C --> D[서비스 워커<br/>탭별 전달]
   D --> E[DevTools 패널<br/>조립 + 지표]
-  B -. 앱은 원본 Response 를 받음 .-> A
+  B -. 앱은 동등한 Response 를 받음 .-> A
 ```
 
-1. 페이지와 같은 JavaScript 세계에서 도는 콘텐츠 스크립트가 `window.fetch` 를 감쌉니다. `text/event-stream` 응답은 **clone** 을 읽으므로 앱은 원본 `Response` 를 그대로 받습니다.
+1. 페이지와 같은 JavaScript 세계에서 도는 콘텐츠 스크립트가 `window.fetch` 를 감쌉니다. `text/event-stream` 응답은 본문을 관찰용 스트림에 통과시키므로 앱은 같은 상태·헤더·URL·바이트의 `Response` 를 받고, 앱이 취소하면 연결도 그대로 닫힙니다.
 2. 두 번째 콘텐츠 스크립트가 조각을 16 ms 단위로 묶어 확장으로 넘깁니다. 탭당 최대 50개 요청, 요청마다 5 MB 또는 20,000 조각까지만 보관하고 상한에 닿으면 잘림으로 표시합니다.
 3. 서비스 워커는 상태가 없고, 같은 탭의 패널로 조각을 전달하며 패널이 열릴 때 밀린 조각을 다시 보냅니다. Chrome 이 유휴 워커를 멈추면 패널에 "확장과 다시 연결하는 중..." 이 뜨며 다시 연결하고, 페이지 쪽 버퍼로 캡처를 복구합니다.
 4. 패널이 SSE 를 파싱하고 공급자를 판별해 결과를 조립하고 지표를 계산합니다. 네트워크로 보내는 것은 없습니다.
@@ -204,7 +204,7 @@ flowchart LR
 ```bash
 npm install
 npm run typecheck   # tsc --noEmit
-npm test            # 파일 14개, 테스트 111개 (Vitest + jsdom)
+npm test            # 파일 14개, 테스트 112개 (Vitest + jsdom)
 npm run build       # 패널, devtools 페이지, 서비스 워커, 콘텐츠 스크립트 번들 2개
 npm run check:dist  # "dist OK" 출력
 npx playwright install chromium   # e2e 전에 한 번
@@ -215,7 +215,7 @@ npm run test:e2e    # 실제 Chromium, 화면 필요(화면 없는 리눅스: xv
 
 ```text
  Test Files  14 passed (14)
-      Tests  111 passed (111)
+      Tests  112 passed (112)
 ```
 
 ### 한계

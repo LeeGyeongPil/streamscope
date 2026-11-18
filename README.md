@@ -170,14 +170,14 @@ See `.env.example`. There is nothing to configure for the extension itself.
 
 ```mermaid
 flowchart LR
-  A[Your web app<br/>fetch] --> B[MAIN-world wrapper<br/>clones the response]
+  A[Your web app<br/>fetch] --> B[MAIN-world wrapper<br/>observes the body stream]
   B --> C[Relay content script<br/>capped buffer]
   C --> D[Service worker<br/>routes by tab]
   D --> E[DevTools panel<br/>assemble + metrics]
-  B -. app gets the original Response .-> A
+  B -. app gets an equivalent Response .-> A
 ```
 
-1. A content script in the page's own JavaScript world wraps `window.fetch`. For `text/event-stream` responses it reads a **clone**, so the app receives its original `Response` untouched.
+1. A content script in the page's own JavaScript world wraps `window.fetch`. For `text/event-stream` responses it passes the body through an observing stream, so the app receives an equivalent `Response` (same status, headers, URL and bytes) and cancelling it still closes the connection.
 2. A second content script relays the chunks (batched every 16 ms) to the extension. It keeps at most 50 requests per tab, each capped at 5 MB or 20,000 chunks, and marks a capture as truncated when the cap is hit.
 3. The service worker is stateless and forwards chunks to the panel of the same tab, replaying the backlog when the panel opens. Chrome stops an idle worker; the panel then shows "Reconnecting to the extension..." and reconnects, and the page-side buffer restores the captures.
 4. The panel parses SSE, detects the provider, assembles the result and computes the metrics. Nothing is sent over the network.
@@ -204,7 +204,7 @@ flowchart LR
 ```bash
 npm install
 npm run typecheck   # tsc --noEmit
-npm test            # 14 files, 111 tests (Vitest + jsdom)
+npm test            # 14 files, 112 tests (Vitest + jsdom)
 npm run build       # panel, devtools page, service worker, then two content-script bundles
 npm run check:dist  # prints "dist OK"
 npx playwright install chromium   # once, before the e2e test
@@ -215,7 +215,7 @@ Output of `npm test`:
 
 ```text
  Test Files  14 passed (14)
-      Tests  111 passed (111)
+      Tests  112 passed (112)
 ```
 
 ### Limitations

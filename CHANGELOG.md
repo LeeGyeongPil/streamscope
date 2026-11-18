@@ -3,6 +3,16 @@
 All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+## [0.1.2] - 2026-11-18
+
+### Fixed
+- Cancelling the app's response body (`reader.cancel()`) now closes the original connection; the capture ends as `aborted` instead of the observer reading the stream to the end.
+
+### Changed
+- Observation now happens as the app reads: a body the app never reads is not captured, and chunk timestamps are taken when the app reads them.
+
 ## [0.1.1] - 2026-11-18
 
 ### Fixed
