@@ -1,5 +1,5 @@
 import type { AddressInfo } from "node:net";
-import type { Server } from "node:http";
+import type { IncomingMessage, Server, ServerResponse } from "node:http";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { CaptureStore } from "../../src/bridge/store";
 import { assemble, computeMetrics } from "../../src/core";
@@ -94,6 +94,40 @@ describe("wrapFetch does not change the app (AC-5)", () => {
     ).rejects.toMatchObject({ name: "AbortError" });
     const cap = await waitForEnd(store);
     expect(cap.end?.status).toBe("aborted");
+  });
+
+  it("reader.cancel() on the app's body closes the server connection and records aborted", async () => {
+    const { store, f } = observed();
+    // Record how the server-side response ends: closed early (client hung up) or fully written.
+    const serverSide: { closed: boolean; finished: boolean } = { closed: false, finished: false };
+    const onReq = (req: IncomingMessage, sres: ServerResponse) => {
+      if (!req.url?.includes("cancel=1")) return;
+      sres.on("close", () => {
+        serverSide.closed = true;
+        serverSide.finished = sres.writableFinished;
+      });
+    };
+    server.on("request", onReq);
+    const url = `${base}/api/openai-chat?chunk=7&gap=20&cancel=1`;
+    const res = await f(url);
+    expect(res.url).toBe(url);
+    const reader = res.body!.getReader();
+    await reader.read();
+    await reader.read();
+    await reader.cancel();
+    const cap = await waitForEnd(store);
+    expect(cap.end?.status).toBe("aborted");
+    // The upstream connection must be closed early, long before the stream would finish.
+    const t0 = Date.now();
+    while (!serverSide.closed && Date.now() - t0 < 1500) await new Promise((r) => setTimeout(r, 10));
+    server.off("request", onReq);
+    expect(serverSide.closed).toBe(true);
+    expect(serverSide.finished).toBe(false);
+    const seen = cap.chunks.length;
+    await new Promise((r) => setTimeout(r, 300));
+    // No further chunks are observed after cancel, and only one capture exists.
+    expect(store.snapshot()[0]!.chunks.length).toBe(seen);
+    expect(store.size).toBe(1);
   });
 
   it("a connection cut mid-stream is recorded as an error", async () => {
