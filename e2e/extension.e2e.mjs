@@ -31,16 +31,32 @@ try {
   // The app (mock page) must still show the original stream untouched.
   assert.match(await page.locator(".card pre").first().innerText(), /message_start/);
 
-  const tabId = await worker.evaluate(async (url) => {
+  // Without the "tabs" permission chrome.tabs.query() hides tab URLs, so identify the mock
+  // page tab by trying each candidate id (the active tab first) until the panel shows the text.
+  const candidates = await worker.evaluate(async () => {
     const tabs = await chrome.tabs.query({});
-    return tabs.find((t) => t.url?.startsWith(url))?.id;
-  }, base);
-  assert.ok(tabId !== undefined, "could not find the mock page tab");
+    return tabs
+      .filter((t) => t.id !== undefined)
+      .sort((x, y) => Number(y.active) - Number(x.active))
+      .map((t) => t.id);
+  });
+  assert.ok(candidates.length > 0, "no tabs found");
 
-  const panel = await context.newPage();
-  await panel.goto(`chrome-extension://${extId}/panel/panel.html?tab=${tabId}&lang=en`);
-  await panel.getByTestId("assembled-text").waitFor();
-  assert.equal(await panel.getByTestId("assembled-text").innerText(), "Hi there");
+  let text = null;
+  for (const tabId of candidates) {
+    const panel = await context.newPage();
+    try {
+      await panel.goto(`chrome-extension://${extId}/panel/panel.html?tab=${tabId}&lang=en`);
+      await panel.getByTestId("assembled-text").waitFor({ timeout: 5000 });
+      text = await panel.getByTestId("assembled-text").innerText();
+      break;
+    } catch {
+      // Not the mock page tab (or no capture there); try the next id.
+    } finally {
+      await panel.close();
+    }
+  }
+  assert.equal(text, "Hi there");
   console.log("e2e OK");
 } finally {
   await context.close();

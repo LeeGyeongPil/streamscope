@@ -1,6 +1,6 @@
 {
   "name": "streamscope",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Chrome DevTools panel that reassembles LLM streaming (SSE) responses: final text, tool-call JSON, latency metrics, replayable export.",
   "private": true,
   "license": "MIT",
