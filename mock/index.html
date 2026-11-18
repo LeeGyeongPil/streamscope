@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>streamscope practice page</title>
+    <style>
+      body { font: 14px/1.5 system-ui, sans-serif; max-width: 900px; margin: 16px auto; padding: 0 12px; }
+      .notice { background: #fff8c5; border: 1px solid #d4a72c; padding: 8px 12px; border-radius: 6px; }
+      header { display: flex; align-items: center; justify-content: space-between; }
+      .opts { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 12px 0; }
+      .buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+      button { padding: 6px 12px; cursor: pointer; }
+      .card { border: 1px solid #d0d7de; border-radius: 6px; padding: 8px 12px; margin-bottom: 8px; }
+      .card h3 { margin: 0 0 4px; font-size: 13px; }
+      pre { margin: 4px 0 0; max-height: 140px; overflow: auto; white-space: pre-wrap; word-break: break-all; background: #f6f8fa; padding: 6px; font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1 id="title"></h1>
+      <label><span id="lang-label"></span> <select id="lang"><option value="en">English</option><option value="ko">한국어</option></select></label>
+    </header>
+    <p class="notice" id="notice"></p>
+    <div class="opts" id="opts"></div>
+    <div class="buttons" id="buttons"></div>
+    <div id="results"></div>
+    <script type="module" src="/mock/page.js"></script>
+  </body>
+</html>

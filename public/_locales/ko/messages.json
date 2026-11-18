@@ -1,0 +1,4 @@
+{
+  "extName": { "message": "streamscope - LLM 스트림 검사기" },
+  "extDescription": { "message": "LLM 스트리밍(SSE) 응답을 조립해 최종 텍스트, 도구 호출 JSON, 지연 지표, 재생용 내보내기를 보여 주는 DevTools 패널." }
+}

@@ -1,0 +1,4 @@
+{
+  "extName": { "message": "streamscope - LLM stream inspector" },
+  "extDescription": { "message": "DevTools panel that reassembles LLM streaming (SSE) responses: final text, tool-call JSON, latency metrics and replayable export." }
+}
